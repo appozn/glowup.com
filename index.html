@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OZN GLOW UP | Elite Edition</title>
+    <!-- App Icons & Web App Identity -->
+    <link rel="icon" type="image/png" href="https://appozn.github.io/.com.br/assets/logo.png">
+    <link rel="apple-touch-icon" href="https://appozn.github.io/.com.br/assets/logo.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg: #020408;
+            --surface: #0B1224;
+            --accent: #012359;
+            /* Deep Royal Blue */
+            --accent-glow: rgba(1, 35, 89, 0.4);
+            --text: #F8FAFC;
+            --text-muted: #64748B;
+            --border: rgba(255, 255, 255, 0.05);
+            --glass: rgba(15, 23, 42, 0.7);
+            --radius: 28px;
+            --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Animated Mesh Background */
+        .mesh-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: radial-gradient(circle at 50% -20%, #1E293B 0%, transparent 50%),
+                radial-gradient(circle at -10% 100%, #0F172A 0%, transparent 50%);
+            opacity: 0.8;
+        }
+
+        /* Header (Centralized) */
+        header {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(2, 4, 8, 0.5);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: none;
+            /* Hidden by default (Mobile) */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo img {
+            height: 48px;
+            width: auto;
+            transition: transform 0.3s var(--ease);
+        }
+
+        @media (min-width: 768px) {
+            .logo {
+                display: flex;
+            }
+
+            /* Shown on Desktop */
+            .logo img {
+                height: 64px;
+            }
+
+            /* Larger on PC */
+            .logo img:hover {
+                transform: scale(1.05);
+            }
+        }
+
+        /* Navigation */
+        .desktop-nav {
+            display: none;
+        }
+
+        .mobile-nav {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(11, 18, 36, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 40px;
+            display: flex;
+            gap: 4px;
+            z-index: 1000;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            border-radius: 32px;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s var(--ease);
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            background: var(--accent);
+            color: var(--bg);
+            box-shadow: 0 8px 16px var(--accent-glow);
+        }
+
+        /* Main Area */
+        main {
+            flex-grow: 1;
+            padding: 24px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+            padding-bottom: 100px;
+            /* Space for mobile nav */
+        }
+
+        /* Views */
+        .view {
+            display: none;
+            animation: view-in 0.6s var(--ease) forwards;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        @keyframes view-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .camera-box {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: #000;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--border);
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        #webcam {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent);
+            box-shadow: 0 0 20px var(--accent);
+            animation: scan-anim 3s infinite ease-in-out;
+            z-index: 10;
+            opacity: 0.5;
+        }
+
+        @keyframes scan-anim {
+
+            0%,
+            100% {
+                top: 0;
+            }
+
+            50% {
+                top: 100%;
+            }
+        }
+
+        /* Results */
+        .res-grid {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .res-img-wrap {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .res-img-wrap img {
+            width: 100%;
+            display: block;
+        }
+
+        .res-label {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .glow-fx {
+            filter: brightness(1.1) contrast(1.05) saturate(1.1);
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.15);
+        }
+
+        /* Metrics */
+        .score-wrap {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .score-val {
+            font-size: 84px;
+            font-weight: 900;
+            color: var(--accent);
+            letter-spacing: -4px;
+            line-height: 1;
+        }
+
+        .score-txt {
+            font-size: 14px;
+            opacity: 0.5;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--accent);
+            color: #FFFFFF;
+            /* High contrast for deep blue */
+            border: none;
+            padding: 18px 32px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 16px;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s var(--ease);
+        }
+
+        .btn:hover {
+            transform: scale(1.02);
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* History */
+        .hist-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 12px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+        }
+
+        .hist-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+
+        .hist-info {
+            flex-grow: 1;
+        }
+
+        .hist-score {
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        /* Tips */
+        .tip-card {
+            background: rgba(56, 189, 248, 0.05);
+            padding: 24px;
+            border-radius: 24px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(56, 189, 248, 0.1);
+        }
+
+        /* Language Button */
+        .lang-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* Details Grid */
+        .detail-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .detail-item span {
+            opacity: 0.5;
+            font-weight: 500;
+        }
+
+        .detail-item b {
+            color: var(--accent);
+            font-weight: 800;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (min-width: 768px) {
+            .mobile-nav {
+                display: none;
+            }
+
+            .desktop-nav {
+                display: flex;
+                gap: 8px;
+                background: var(--surface);
+                padding: 4px;
+                border-radius: 16px;
+                border: 1px solid var(--border);
+            }
+
+            .desktop-nav .nav-item {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+
+            main {
+                max-width: 800px;
+                padding-bottom: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="mesh-bg"></div>
+
+    <header>
+        <div class="logo">
+            <img src="https://appozn.github.io/.com.br/assets/logo.png" alt="OZN Logo">
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="desktop-nav">
+                <div class="nav-item active" onclick="nav('home')" id="d-home" data-i18n="n-home">Home</div>
+                <div class="nav-item" onclick="nav('scan')" id="d-scan" data-i18n="n-scan">Scan</div>
+                <div class="nav-item" onclick="nav('history')" id="d-history" data-i18n="n-history">History</div>
+                <div class="nav-item" onclick="nav('tips')" id="d-tips" data-i18n="n-tips">Tips</div>
+            </div>
+            <button class="lang-btn" onclick="toggleLang()" id="lang-btn">PT</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- HOME VIEW -->
+        <div id="v-home" class="view active">
+            <div class="card text-center" style="padding: 40px 24px;">
+                <div
+                    style="background: var(--accent); width: 64px; height: 64px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px; color: var(--bg); box-shadow: 0 10px 30px var(--accent-glow);">
+                    <i data-lucide="home" style="width: 32px; height: 32px;"></i>
+                </div>
+                <h1 style="margin-bottom: 16px;" data-i18n="h-title-main">Bem-vindo ao OZN GLOW</h1>
+                <p style="color: var(--text-muted); margin-bottom: 32px; font-size: 16px; line-height: 1.6;"
+                    data-i18n="h-desc">
+                    A plataforma de inteligência facial elite projetada para elevar seu potencial máximo. Analise sua
+                    estrutura óssea, qualidade de pele e receba dicas personalizadas para o seu glow up.
+                </p>
+
+                <div style="display: grid; gap: 16px; margin-bottom: 40px; text-align: left;">
+                    <div
+                        style="display: flex; gap: 16px; align-items: center; background: rgba(255,255,255,0.02); padding: 16px; border-radius: 16px; border: 1px solid var(--border);">
+                        <i data-lucide="scan" style="color: var(--accent); width: 24px;"></i>
+                        <div>
+                            <b style="display: block; font-size: 14px;" data-i18n="h-f1-t">Scan Biométrico</b>
+                            <span style="font-size: 12px; opacity: 0.5;" data-i18n="h-f1-d">Análise profunda de Maxilar,
+                                Olhos e Pele.</span>
+                        </div>
+                    </div>
+                    <div
+                        style="display: flex; gap: 16px; align-items: center; background: rgba(255,255,255,0.02); padding: 16px; border-radius: 16px; border: 1px solid var(--border);">
+                        <i data-lucide="sparkles" style="color: var(--accent); width: 24px;"></i>
+                        <div>
+                            <b style="display: block; font-size: 14px;" data-i18n="h-f2-t">Dicas Elite</b>
+                            <span style="font-size: 12px; opacity: 0.5;" data-i18n="h-f2-d">Orientações profissionais
+                                para sua rotina.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="nav('scan')">
+                    <span data-i18n="h-btn">COMEÇAR AGORA</span> <i data-lucide="arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCAN VIEW -->
+        <div id="v-scan" class="view">
+            <div class="card text-center">
+                <div class="camera-box">
+                    <video id="webcam" autoplay playsinline></video>
+                    <div class="scan-line"></div>
+                </div>
+                <h1 style="margin-bottom: 8px;" data-i18n="s-title">Scan Facial Elite</h1>
+                <p style="color: var(--text-muted); margin-bottom: 32px; font-size: 15px;" data-i18n="s-sub">Inicie uma
+                    análise profunda para o seu glow up.</p>
+                <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                    <button class="btn" onclick="capture()">
+                        <i data-lucide="camera"></i> <span data-i18n="b-scan">SCAN AGORA</span>
+                    </button>
+
+                    <button class="btn btn-secondary" onclick="document.getElementById('file-up').click()">
+                        <i data-lucide="upload"></i> <span data-i18n="b-upload">UPLOAD IMAGEM</span>
+                    </button>
+                    <input type="file" id="file-up" class="hidden" accept="image/*" onchange="handleUpload(event)">
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS VIEW -->
+        <div id="v-results" class="view">
+            <div class="card" style="display: flex; flex-direction: column; align-items: center; gap: 24px;">
+                <div class="res-img-wrap" style="width: 140px; height: 140px; border-radius: 50%;">
+                    <img id="img-res" src="" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+
+                <div style="width: 100%;">
+                    <h3 id="res-st" style="text-align: center; margin-bottom: 24px;">--</h3>
+
+                    <div class="details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="detail-item">
+                            <span data-i18n="m-jaw">Maxilar</span>
+                            <b id="val-jaw">--</b>
+                        </div>
+                        <div class="detail-item">
+                            <span data-i18n="m-eyes">Olhos</span>
+                            <b id="val-eyes">--</b>
+                        </div>
+                        <div class="detail-item">
+                            <span data-i18n="m-mouth">Boca</span>
+                            <b id="val-mouth">--</b>
+                        </div>
+                        <div class="detail-item">
+                            <span data-i18n="m-nose">Nariz</span>
+                            <b id="val-nose">--</b>
+                        </div>
+                        <div class="detail-item" style="grid-column: span 2;">
+                            <span data-i18n="m-skin">Pele</span>
+                            <b id="val-skin">--</b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Score at the end of the list -->
+            <div class="score-wrap" style="margin-top: 0; margin-bottom: 24px;">
+                <p class="score-txt" data-i18n="r-score">TOTAL GLOW</p>
+                <div class="score-val" id="res-val">--</div>
+            </div>
+
+            <div class="card" style="padding: 24px;">
+                <p id="res-tp" style="color: var(--text-muted); font-size: 14px; text-align: center;"></p>
+            </div>
+
+            <button class="btn" onclick="nav('scan')">
+                <i data-lucide="refresh-cw"></i> <span data-i18n="b-new">NOVO SCAN</span>
+            </button>
+        </div>
+
+        <!-- HISTORY VIEW -->
+        <div id="v-history" class="view">
+            <h2 style="margin-bottom: 24px;" data-i18n="h-title">Histórico</h2>
+            <div id="hist-list"></div>
+        </div>
+
+        <!-- TIPS VIEW -->
+        <div id="v-tips" class="view">
+            <h2 style="margin-bottom: 24px;" data-i18n="t-title">Dicas Elite</h2>
+            <div id="tips-list"></div>
+        </div>
+    </main>
+
+    <!-- MOBILE NAV -->
+    <nav class="mobile-nav">
+        <div class="nav-item active" onclick="nav('home')" id="m-home">
+            <i data-lucide="home"></i>
+        </div>
+        <div class="nav-item" onclick="nav('scan')" id="m-scan">
+            <i data-lucide="camera"></i>
+        </div>
+        <div class="nav-item" onclick="nav('history')" id="m-history">
+            <i data-lucide="history"></i>
+        </div>
+        <div class="nav-item" onclick="nav('tips')" id="m-tips">
+            <i data-lucide="sparkles"></i>
+        </div>
+    </nav>
+
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <script>
+        const state = {
+            lang: 'pt',
+            history: JSON.parse(localStorage.getItem('ozn_hist') || '[]'),
+            i18n: {
+                pt: {
+                    'n-home': 'Início', 'n-scan': 'Scanner', 'n-history': 'Histórico', 'n-tips': 'Dicas',
+                    'h-title-main': 'Bem-vindo ao OZN GLOW', 'h-desc': 'A plataforma de inteligência facial elite projetada para elevar seu potencial máximo.',
+                    'h-f1-t': 'Scan Biométrico', 'h-f1-d': 'Análise profunda de Maxilar, Olhos e Pele.',
+                    'h-f2-t': 'Dicas Elite', 'h-f2-d': 'Orientações profissionais para sua rotina.',
+                    'h-btn': 'COMEÇAR AGORA',
+                    's-title': 'Scan Facial Elite', 's-sub': 'Inicie uma análise profunda para o seu glow up.',
+                    'b-scan': 'SCAN AGORA', 'b-upload': 'UPLOAD IMAGEM', 'r-score': 'TOTAL GLOW', 'b-new': 'NOVO SCAN', 'h-title': 'Histórico',
+                    't-title': 'Dicas Elite', 'st-1': 'POTENCIAL BRUTO', 'st-2': 'QUASE LÁ', 'st-3': 'PERFEIÇÃO',
+                    'tp-1': 'Foque em sono e hidratação.', 'tp-2': 'Postura e treino farão a diferença.', 'tp-3': 'Você é a elite do ozônio.',
+                    'm-jaw': 'Maxilar', 'm-eyes': 'Olhos', 'm-mouth': 'Boca', 'm-nose': 'Nariz', 'm-skin': 'Pele'
+                },
+                en: {
+                    'n-home': 'Home', 'n-scan': 'Scan', 'n-history': 'History', 'n-tips': 'Tips',
+                    'h-title-main': 'Welcome to OZN GLOW', 'h-desc': 'The elite facial intelligence platform designed to elevate your maximum potential.',
+                    'h-f1-t': 'Biometric Scan', 'h-f1-d': 'Deep analysis of Jawline, Eyes, and Skin.',
+                    'h-f2-t': 'Elite Tips', 'h-f2-d': 'Professional guidance for your routine.',
+                    'h-btn': 'START NOW',
+                    's-title': 'Elite Facial Scan', 's-sub': 'Start a deep analysis for your glow up.',
+                    'b-scan': 'SCAN NOW', 'b-upload': 'UPLOAD IMAGE', 'r-score': 'TOTAL GLOW', 'b-new': 'NEW SCAN', 'h-title': 'History',
+                    't-title': 'Elite Tips', 'st-1': 'RAW POTENTIAL', 'st-2': 'GETTING THERE', 'st-3': 'PERFECTION',
+                    'tp-1': 'Focus on sleep and hydration.', 'tp-2': 'Posture and training will help.', 'tp-3': 'You are the OZN elite.',
+                    'm-jaw': 'Jawline', 'm-eyes': 'Eyes', 'm-mouth': 'Mouth', 'm-nose': 'Nose', 'm-skin': 'Skin'
+                }
+            }
+        };
+
+        const tips = [
+            { icon: 'droplets', pt: "Mantenha a ingestão de 3L de água diariamente para elasticidade da pele.", en: "Maintain 3L water intake daily for skin elasticity." },
+            { icon: 'moon', pt: "Priorize 8h de sono; é durante o descanso que as células se renovam.", en: "Prioritize 8h of sleep; it's during rest that cells renew." },
+            { icon: 'sun', pt: "Aplique protetor solar FPS 50+ mesmo em dias nublados ou em casa.", en: "Apply SPF 50+ sunscreen even on cloudy days or at home." },
+            { icon: 'dumbbell', pt: "Treino de força aumenta a testosterona e melhora a densidade facial.", en: "Strength training boosts testosterone and improves facial density." },
+            { icon: 'wind', pt: "Mewing: Mantenha a língua no céu da boca para definir a mandíbula.", en: "Mewing: Keep your tongue on the roof of your mouth to define your jaw." },
+            { icon: 'utensils', pt: "Reduza açúcares e laticínios para diminuir inflamações e acne.", en: "Reduce sugars and dairy to decrease inflammation and acne." },
+            { icon: 'zap', pt: "Banho gelado ao acordar fecha os poros e reduz o inchaço matinal.", en: "Morning cold shower closes pores and reduces morning puffiness." },
+            { icon: 'shield-check', pt: "Postura ereta aumenta sua presença e confiança instantaneamente.", en: "Upright posture instantly increases your presence and confidence." },
+            { icon: 'sparkles', pt: "Double Cleansing: Use óleo de limpeza antes do sabonete à noite.", en: "Double Cleansing: Use cleansing oil before soap at night." },
+            { icon: 'flask-conical', pt: "Vitamina C matinal ajuda a combater radicais livres e clarear manchas.", en: "Morning Vitamin C helps fight free radicals and lighten spots." },
+            { icon: 'eye', pt: "Use creme de olhos com cafeína para reduzir olheiras e bolsas.", en: "Use eye cream with caffeine to reduce dark circles and bags." },
+            { icon: 'eraser', pt: "Esfoliação química (AHA/BHA) uma vez por semana para renovar a textura.", en: "Chemical exfoliation (AHA/BHA) once a week to renew texture." },
+            { icon: 'smile', pt: "Evite franzir a testa para prevenir linhas de expressão permanentes.", en: "Avoid frowning to prevent permanent expression lines." },
+            { icon: 'pill', pt: "Considere colágeno verisol e biotina para cabelo, pele e unhas.", en: "Consider verisol collagen and biotin for hair, skin, and nails." },
+            { icon: 'coffee', pt: "Troque o café por chá verde: rico em antioxidantes potentes.", en: "Swap coffee for green tea: rich in powerful antioxidants." },
+            { icon: 'bed', pt: "Troque a fronha do travesseiro por cetim para evitar atrito na pele.", en: "Swap pillowcases for satin to avoid skin friction." },
+            { icon: 'gem', pt: "Gua Sha: Use uma pedra de quartzo para drenagem linfática facial.", en: "Gua Sha: Use a quartz stone for facial lymphatic drainage." },
+            { icon: 'thermometer', pt: "Lave o rosto com água morna, nunca quente, para não remover óleos naturais.", en: "Wash your face with lukewarm water, never hot, to avoid stripping natural oils." },
+            { icon: 'beaker', pt: "Retinol à noite: O padrão ouro para antienvelhecimento e textura.", en: "Retinol at night: The gold standard for anti-aging and texture." },
+            { icon: 'heart', pt: "Lip Care: Use hidratante labial com ácido hialurônico diariamente.", en: "Lip Care: Use lip balm with hyaluronic acid daily." },
+            { icon: 'brain', pt: "Reduza o estresse: O cortisol alto envelhece a pele prematuramente.", en: "Reduce stress: High cortisol ages skin prematurely." },
+            { icon: 'timer', pt: "Aguarde 30 segundos entre camadas de produtos para absorção total.", en: "Wait 30 seconds between product layers for full absorption." },
+            { icon: 'glass-water', pt: "Inicie o dia com água com limão para alcalinizar o corpo.", en: "Start the day with lemon water to alkalize the body." }
+        ];
+
+        let stream = null;
+
+        function nav(v) {
+            // Stop camera if leaving scan
+            if (state.activeView === 'scan' && v !== 'scan') stopCamera();
+
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            document.getElementById(`v-${v}`).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const m = document.getElementById(`m-${v}`);
+            if (m) m.classList.add('active');
+            const d = document.getElementById(`d-${v}`);
+            if (d) d.classList.add('active');
+
+            state.activeView = v;
+
+            if (v === 'scan') startCamera();
+            if (v === 'history') renderHistory();
+            if (v === 'tips') renderTips();
+            window.scrollTo(0, 0);
+        }
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                document.getElementById('webcam').srcObject = stream;
+            } catch (e) {
+                console.warn("Camera error:", e);
+                alert("Erro ao acessar a câmera. Verifique as permissões.");
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                document.getElementById('webcam').srcObject = null;
+                stream = null;
+            }
+        }
+
+        function handleUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = e.target.result;
+                const score = Math.floor(Math.random() * 83) + 15;
+                state.history.unshift({ data, score, date: new Date().toLocaleDateString() });
+                localStorage.setItem('ozn_hist', JSON.stringify(state.history.slice(0, 10)));
+                displayResults(data, score);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function init() {
+            lucide.createIcons();
+            updateUI();
+            state.activeView = 'home';
+        }
+
+        function capture() {
+            const v = document.getElementById('webcam');
+            const c = document.getElementById('canvas');
+            c.width = v.videoWidth || 800; c.height = v.videoHeight || 800;
+            const ctx = c.getContext('2d');
+            ctx.translate(c.width, 0); ctx.scale(-1, 1);
+            ctx.drawImage(v, 0, 0);
+
+            const data = c.toDataURL('image/jpeg');
+            const score = Math.floor(Math.random() * 83) + 15;
+
+            state.history.unshift({ data, score, date: new Date().toLocaleDateString() });
+            localStorage.setItem('ozn_hist', JSON.stringify(state.history.slice(0, 10)));
+
+            displayResults(data, score);
+        }
+
+        function displayResults(data, score) {
+            document.getElementById('img-res').src = data;
+            document.getElementById('res-val').innerText = score;
+
+            // Random sub-metrics
+            const metrics = ['jaw', 'eyes', 'mouth', 'nose', 'skin'];
+            metrics.forEach(m => {
+                const s = Math.floor(Math.random() * 83) + 15;
+                document.getElementById(`val-${m}`).innerText = s;
+            });
+
+            const i = state.i18n[state.lang];
+            const st = score > 90 ? i['st-3'] : (score > 80 ? i['st-2'] : i['st-1']);
+            const tp = score > 90 ? i['tp-3'] : (score > 80 ? i['tp-2'] : i['tp-1']);
+
+            document.getElementById('res-st').innerText = st;
+            document.getElementById('res-tp').innerText = tp;
+
+            nav('results');
+        }
+
+        function renderHistory() {
+            const l = document.getElementById('hist-list');
+            l.innerHTML = state.history.map(h => `
+                <div class="hist-card">
+                    <img src="${h.data}" class="hist-img">
+                    <div class="hist-info">
+                        <div style="font-size: 10px; opacity: 0.5;">${h.date}</div>
+                        <div class="hist-score">${h.score}</div>
+                    </div>
+                </div>
+            `).join('') || '<div style="opacity:0.2;text-align:center;padding:40px;">Sem dados</div>';
+        }
+
+        function renderTips() {
+            const l = document.getElementById('tips-list');
+            l.innerHTML = tips.map(t => `
+                <div class="tip-card" style="display: flex; align-items: flex-start; gap: 16px;">
+                    <div style="background: var(--accent); padding: 10px; border-radius: 12px; color: var(--bg);">
+                        <i data-lucide="${t.icon}" style="width: 18px; height: 18px;"></i>
+                    </div>
+                    <div style="font-size: 14px; font-weight: 600; line-height: 1.4;">${t[state.lang]}</div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function toggleLang() {
+            state.lang = state.lang === 'pt' ? 'en' : 'pt';
+            document.getElementById('lang-btn').innerText = state.lang.toUpperCase();
+            updateUI();
+            if (document.getElementById('v-tips').classList.contains('active')) renderTips();
+        }
+
+        function updateUI() {
+            const i = state.i18n[state.lang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const k = el.getAttribute('data-i18n');
+                if (i[k]) el.innerText = i[k];
+            });
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
