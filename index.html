@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OZN GLOW UP | Elite Edition</title>
+    <title>OZN GLOW UP</title>
     <!-- App Icons & Web App Identity -->
     <link rel="icon" type="image/png" href="https://appozn.github.io/.com.br/assets/logo.png">
     <link rel="apple-touch-icon" href="https://appozn.github.io/.com.br/assets/logo.png">
@@ -13,6 +13,8 @@
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Face API -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         :root {
             --bg: #020408;
@@ -599,9 +601,10 @@
                     'h-btn': 'COMEÇAR AGORA',
                     's-title': 'Scan Facial Elite', 's-sub': 'Inicie uma análise profunda para o seu glow up.',
                     'b-scan': 'SCAN AGORA', 'b-upload': 'UPLOAD IMAGEM', 'r-score': 'TOTAL GLOW', 'b-new': 'NOVO SCAN', 'h-title': 'Histórico',
-                    't-title': 'Dicas Elite', 'st-1': 'POTENCIAL BRUTO', 'st-2': 'QUASE LÁ', 'st-3': 'PERFEIÇÃO',
-                    'tp-1': 'Foque em sono e hidratação.', 'tp-2': 'Postura e treino farão a diferença.', 'tp-3': 'Você é a elite do ozônio.',
-                    'm-jaw': 'Maxilar', 'm-eyes': 'Olhos', 'm-mouth': 'Boca', 'm-nose': 'Nariz', 'm-skin': 'Pele'
+                    't-title': 'Dicas Elite', 'st-1': 'POTENCIAL BRUTO', 'st-2': 'POTENCIAL BOM', 'st-3': 'POTENCIAL MÁXIMO',
+                    'tp-1': 'Foque em sono e hidratação.', 'tp-2': 'Postura e treino farão a diferença.', 'tp-3': 'Você atingiu o nível elite.',
+                    'm-jaw': 'Maxilar', 'm-eyes': 'Olhos', 'm-mouth': 'Boca', 'm-nose': 'Nariz', 'm-skin': 'Pele',
+                    'err-face': 'Nenhum rosto detectado. Tente outra foto.'
                 },
                 en: {
                     'n-home': 'Home', 'n-scan': 'Scan', 'n-history': 'History', 'n-tips': 'Tips',
@@ -611,9 +614,10 @@
                     'h-btn': 'START NOW',
                     's-title': 'Elite Facial Scan', 's-sub': 'Start a deep analysis for your glow up.',
                     'b-scan': 'SCAN NOW', 'b-upload': 'UPLOAD IMAGE', 'r-score': 'TOTAL GLOW', 'b-new': 'NEW SCAN', 'h-title': 'History',
-                    't-title': 'Elite Tips', 'st-1': 'RAW POTENTIAL', 'st-2': 'GETTING THERE', 'st-3': 'PERFECTION',
-                    'tp-1': 'Focus on sleep and hydration.', 'tp-2': 'Posture and training will help.', 'tp-3': 'You are the OZN elite.',
-                    'm-jaw': 'Jawline', 'm-eyes': 'Eyes', 'm-mouth': 'Mouth', 'm-nose': 'Nose', 'm-skin': 'Skin'
+                    't-title': 'Elite Tips', 'st-1': 'RAW POTENTIAL', 'st-2': 'GOOD POTENTIAL', 'st-3': 'MAXIMUM POTENTIAL',
+                    'tp-1': 'Focus on sleep and hydration.', 'tp-2': 'Posture and training will help.', 'tp-3': 'You have reached elite level.',
+                    'm-jaw': 'Jawline', 'm-eyes': 'Eyes', 'm-mouth': 'Mouth', 'm-nose': 'Nose', 'm-skin': 'Skin',
+                    'err-face': 'No face detected. Try another photo.'
                 }
             }
         };
@@ -685,14 +689,37 @@
             }
         }
 
-        function handleUpload(event) {
+        function hashCode(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash);
+        }
+
+        function getDeterministicValue(seed, min, max, offset = "") {
+            const hash = hashCode(seed + offset);
+            return min + (hash % (max - min + 1));
+        }
+
+        async function handleUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 const data = e.target.result;
-                const score = Math.floor(Math.random() * 83) + 15;
+                
+                // Show "scanning" state or just wait
+                const isFace = await validateFace(data);
+                if (!isFace) {
+                    alert(state.i18n[state.lang]['err-face']);
+                    return;
+                }
+
+                const score = getDeterministicValue(data, 15, 98, "total");
                 state.history.unshift({ data, score, date: new Date().toLocaleDateString() });
                 localStorage.setItem('ozn_hist', JSON.stringify(state.history.slice(0, 10)));
                 displayResults(data, score);
@@ -706,7 +733,7 @@
             state.activeView = 'home';
         }
 
-        function capture() {
+        async function capture() {
             const v = document.getElementById('webcam');
             const c = document.getElementById('canvas');
             c.width = v.videoWidth || 800; c.height = v.videoHeight || 800;
@@ -715,7 +742,14 @@
             ctx.drawImage(v, 0, 0);
 
             const data = c.toDataURL('image/jpeg');
-            const score = Math.floor(Math.random() * 83) + 15;
+
+            const isFace = await validateFace(data);
+            if (!isFace) {
+                alert(state.i18n[state.lang]['err-face']);
+                return;
+            }
+
+            const score = getDeterministicValue(data, 15, 98, "total");
 
             state.history.unshift({ data, score, date: new Date().toLocaleDateString() });
             localStorage.setItem('ozn_hist', JSON.stringify(state.history.slice(0, 10)));
@@ -727,16 +761,16 @@
             document.getElementById('img-res').src = data;
             document.getElementById('res-val').innerText = score;
 
-            // Random sub-metrics
+            // Deterministic sub-metrics
             const metrics = ['jaw', 'eyes', 'mouth', 'nose', 'skin'];
             metrics.forEach(m => {
-                const s = Math.floor(Math.random() * 83) + 15;
+                const s = getDeterministicValue(data, 15, 98, m);
                 document.getElementById(`val-${m}`).innerText = s;
             });
 
             const i = state.i18n[state.lang];
-            const st = score > 90 ? i['st-3'] : (score > 80 ? i['st-2'] : i['st-1']);
-            const tp = score > 90 ? i['tp-3'] : (score > 80 ? i['tp-2'] : i['tp-1']);
+            const st = score >= 90 ? i['st-3'] : (score >= 75 ? i['st-2'] : i['st-1']);
+            const tp = score >= 90 ? i['tp-3'] : (score >= 75 ? i['tp-2'] : i['tp-1']);
 
             document.getElementById('res-st').innerText = st;
             document.getElementById('res-tp').innerText = tp;
@@ -783,6 +817,36 @@
                 const k = el.getAttribute('data-i18n');
                 if (i[k]) el.innerText = i[k];
             });
+        }
+
+        let modelsLoaded = false;
+        async function loadModels() {
+            try {
+                const MODEL_URL = 'https://appozn.github.io/.com.br/models';
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                modelsLoaded = true;
+                console.log("Models loaded");
+            } catch (e) {
+                console.error("Model loading failed:", e);
+                // Fallback to another CDN if the first one fails
+                try {
+                    await faceapi.nets.tinyFaceDetector.loadFromUri('https://justadudewhohacks.github.io/face-api.js/models');
+                    modelsLoaded = true;
+                } catch (e2) {
+                    console.error("All model CDNs failed");
+                }
+            }
+        }
+
+        async function validateFace(imageSrc) {
+            if (!modelsLoaded) await loadModels();
+            
+            const img = new Image();
+            img.src = imageSrc;
+            await new Promise(resolve => img.onload = resolve);
+            
+            const detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions());
+            return detections.length > 0;
         }
 
         init();
